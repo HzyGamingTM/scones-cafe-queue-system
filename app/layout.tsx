@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Scones Cafe Queue",
+  title: "Escape Room Cafe Queue",
   description: "Scones Cafe Queue Website",
 };
 

@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.bottomblur {
+  @apply absolute inset-0;
+  /* Use a semi-transparent background color with the backdrop-filter for a frosted glass effect */
+
+  /* The key CSS properties */
+  backdrop-filter: blur(10px);
+  
+  /* The mask creates the gradient effect, mapping black to opaque blur and transparent to no blur */
+  mask-image: linear-gradient(
+    to bottom, 
+    black 0%,      /* Full blur at the top */
+    black 70%,     /* Full blur continues */
+    transparent 90% /* Fade to no blur at the bottom */
+  );
+}

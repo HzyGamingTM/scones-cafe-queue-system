@@ -36,7 +36,7 @@ body {
   mask-image: linear-gradient(
     to bottom, 
     black 0%,      /* Full blur at the top */
-    black 70%,     /* Full blur continues */
-    transparent 90% /* Fade to no blur at the bottom */
+    black 40%,     /* Full blur continues */
+    transparent 85% /* Fade to no blur at the bottom */
   );
 }

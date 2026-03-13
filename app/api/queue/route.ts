@@ -3,9 +3,12 @@ import { singletonQueues } from "@/server/queue";
 import { cookies } from 'next/headers'
 
 export async function GET(request: NextRequest) {
-    let queueToken = request.cookies.get("queue_token")?.value;
+    let queueToken = request.nextUrl.searchParams.get("queue_token") ?? undefined;
+    
+    if (queueToken === undefined)
+        queueToken = request.cookies.get("queue_token")?.value;
 
-    let errMsg = "Required cookie missing: queue_token";
+    let errMsg = "Required value missing: queue_token";
 
     if (queueToken) {
         let room = await singletonQueues.getQueueNumberContainingUuid(queueToken);
@@ -29,6 +32,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: false, message: errMsg }, { status: 404 });
 }
+
+
 
 /*
 export async function POST(request: NextRequest) {

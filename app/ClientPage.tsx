@@ -1,6 +1,5 @@
 "use client";
 
-
 import Image from "next/image";
 import localFont from "next/font/local";
 import Card from "@/components/Card";
@@ -42,10 +41,6 @@ const rooms: Room[] = [
 
 function QueueStatusBar() {
     const [queueStatus, setQueueStatus] = useState({ status: QueueStatus.NOT_IN_QUEUE });
-
-    setInterval(() => {
-        setQueueStates
-    }, 15000);
 
     return (
         <></>

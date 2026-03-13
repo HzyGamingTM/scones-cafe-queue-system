@@ -28,7 +28,7 @@ export class Queue {
 
         const newQueueEntry: QueueEntry = {
             uuid: uuid,
-            time_added: new Date().toDateString()
+            time_added: new Date().toDateString(),
         };
 
         const rp = this.redisPrefix;

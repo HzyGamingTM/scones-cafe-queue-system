@@ -5,7 +5,8 @@ export default function Login() {
 
         <div className="bg-black flex flex-col justify-between min-h-dvh">
 
-            <div className="grow max-h-132 flex flex-col items-center justify-center p-1">
+            <div className="grow max-h-130 flex flex-col items-center justify-center p-1">
+                <h1 className="text-center text-3xl text-white-300 mb-20">Scones Escape Room</h1>
                 <form action="/api/login" method="POST" className="mx-auto min-w-72 w-fit p-2 rounded-lg text-center">
                     <div className="my-4 w-full flex flex-col gap-4 items-center">
 

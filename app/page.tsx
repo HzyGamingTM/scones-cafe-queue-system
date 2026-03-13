@@ -2,79 +2,41 @@ import Image from "next/image";
 import localFont from "next/font/local";
 import Card from "@/components/Card";
 import Footer from "@/components/Footer";
+import { cookies, headers } from "next/headers";
+import { singletonQueues } from "@/server/queue";
+import ClientPage from "./ClientPage";
 
+export default async function Home({ searchParams } : { searchParams: Promise<any> } ) {
+    const sp = await searchParams;
+    const cookieStore = await cookies();
+    let inQueue = false;
 
-export const Pusab = localFont({
-    variable: "--my-pusab",
-    src: "../public/fonts/PUSAB.otf"
-});
+    const paramQueueToken = sp["q"];
+    const cookieQueueToken = cookieStore.get("queue_token")?.value;
 
-const bgUrl : string = "https://media1.tenor.com/m/7Wr359XtEtEAAAAd/uma-musume-meep.gif"; 
+    if (paramQueueToken && await singletonQueues.get(paramQueueToken) !== undefined) {
 
-type Room = {
-    title: string,
-    description: string,
-    imageUrl: string
-}
+        const twodays = 2 * 86400 * 1000;
+        cookieStore.set("queue_token", paramQueueToken, {
+            expires: new Date(Date.now() + twodays)
+        });
 
-const rooms: Room[] = [
-    {
-        title: "Museum Heist", 
-        description: "Reallyreallylongdescription\nwithnewlines\nin it\nraelly ling discriotn ! \n reall ylong description \n really long descrtitn! verticall y and horzioyalntally\n wowowowoowow womimkuki,miju \n miumokumoku \n mokou wwowoow!! ikumiukmikumi \ntetotetotetotetotetotetotetotetote\n",
-        imageUrl: "/images/placeholder.png"
-    },
-    {
-        title: "Amongst Us in Space", 
-        description: "oral with fih",
-        imageUrl: "/images/placeholder.png"
-    },
-    {
-        title: "Who Cracked Dumpty?",
-        description: "backshots with biembambom",
-        imageUrl: "/images/placeholder.png"
-    }, // TODO: Ask lim for escape room image
-]
+        inQueue = true;
 
-export default function Home() {
+    } else if (cookieQueueToken) {
+
+        if (await singletonQueues.get(cookieQueueToken) !== undefined) {
+            inQueue = true;
+        } else {
+            cookieStore.delete("queue_token");
+        }
+
+    }
+    
     return ( 
         <div className="flex flex-col min-h-screen min-w-80 bg-radial from-sky-950 to-black">
-
-            <div className="grow pb-8 justify-center decoration-amber-50 pt-8 px-4">
-
-                <h1 className="text-center text-4xl mb-20 text-shadow-xl font-bold">
-                    Select an Escape Room
-                </h1>
-
-                <section className="flex flex-wrap items-center justify-center gap-10">
-                    {
-                        rooms.map((room, index) => (
-                            <Card key={index}
-                                  title={room.title} 
-                                  description={room.description}
-                                  imageUrl={room.imageUrl}
-                            />
-                        ))
-                    }
-                </section>
-
-
-            </div>
-
-            <Footer/>
-
+            <ClientPage inQueue={inQueue} />
+            <Footer />
         </div>
     );
 }
-
-
-//     return (
-//         <div className="flex min-h-screen items-center justify-center bg-zinc-50 pusab">
-//             <main className="flex min-h-screen w-max flex-col items-center justify-between bg-white dark:bg-black sm:items-start">
-//                 <div className="flex flex-col w-max h-max">
-//                     <h1 className={`mt-20 ml-auto mr-auto text-3xl mb-20 text-white ${Pusab.className}`}>🚀 Scones Room Queue Registration 🚀</h1>
-//                     <button className={`ml-auto mr-auto w-50 h-10 mt-20 text-black rounded-2xl bg-yellow-100 ${Pusab.className}`}>Get Queue Number</button>
-//                 </div>
-//             </main>
-//         </div>
-//     );
-// }

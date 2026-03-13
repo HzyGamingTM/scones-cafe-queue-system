@@ -13,13 +13,17 @@ export async function POST(request: NextRequest) {
     if (username === undefined || password === undefined)
         return NextResponse.json({ success: false, messsage: "Bad Request" }, { status: 400 })
 
-    const authToken = adminAuthSingleton.tryLogin(username, password);
+    const authToken = await adminAuthSingleton.tryLogin(username, password);
     if (authToken !== undefined) {
-        console.log(adminAuthSingleton.authorizedSessions);
-        (await cookies()).set("auth_token", authToken);
+        const twodays = 2 * 86400 * 1000;
+        (await cookies()).set("auth_token", authToken, {
+            expires: new Date(Date.now() + twodays),
+            secure: true,
+            httpOnly: true
+        });
         redirect("/admin", RedirectType.replace);
     } else {
-        // redirect("/login", RedirectType.replace);
-        return NextResponse.json({ message: 'Invalid Credentials' }, { status: 403 });
+        redirect("/login", RedirectType.replace);
+        // return NextResponse.json({ message: 'Invalid Credentials' }, { status: 403 });
     }
 }

@@ -1,48 +1,90 @@
 import { NextResponse, NextRequest } from "next/server";
 import { redirect, RedirectType } from 'next/navigation'
 import { cookies } from 'next/headers';
+import { adminAuthSingleton } from "@/server/adminAuth";
+import { singletonQueues } from "@/server/queue";
 import crypto from "node:crypto";
 
-export async function POST(request: NextRequest) {
-    let token: string | undefined = (await cookies()).get("token")?.value;
+export async function GET(request: NextRequest) {
+    const authToken: string | undefined = (await cookies()).get("authToken")?.value;
     
-    let ADMIN_PASSWORD: string;
+    if (authToken === undefined || await adminAuthSingleton.isSessionAuthorized(authToken) == false)
+        return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
 
-    try {
-        ADMIN_PASSWORD = process.env.ADMIN_PASSWORD!;
-        if (
-            ADMIN_PASSWORD === "" ||
-            ADMIN_PASSWORD === null ||
-            ADMIN_PASSWORD === undefined 
-        ) {
-            return new NextResponse(JSON.stringify(
-                { message: 'Internal Server Error' }), {    
-                status: 500,
-                headers: { 'content-type': 'application/json' },
+    const params = request.nextUrl.searchParams;
+    const method = params.get("method");
+}
+
+export async function POST(request: NextRequest) {
+    const authToken: string | undefined = (await cookies()).get("authToken")?.value;
+    
+    if (authToken === undefined || await adminAuthSingleton.isSessionAuthorized(authToken) == false)
+        return NextResponse.json({ success: false, message: 'Forbidden' }, { status: 403 });
+
+    const params = request.nextUrl.searchParams;
+    const method = params.get("method");
+
+    switch (method) {
+        case "dequeue": {
+            const room = params.get("room");
+
+            if (room === null)
+                return NextResponse.json({
+                    success: false,
+                    message: "Missing required parameter: room" 
+                }, { status: 400 });
+
+            const roomNum = parseInt(room);
+            if (roomNum === null)
+                return NextResponse.json({
+                    success: false,
+                    message: "Invalid room" 
+                }, { status: 400 });
+
+            const result = await singletonQueues.dequeueFirst(roomNum);
+            if (result === undefined) {
+                return NextResponse.json({
+                    success: false,
+                    message: "Unsuccessful"
+                }, { status: 500 });
+            }
+
+            return NextResponse.json({
+                success: true,
+                data: result
             });
         }
-            
-    } catch (err) {
-        console.log(err);
-        return new NextResponse(JSON.stringify(
-            { message: 'Internal Server Error' }), {
-            status: 502,
-            headers: { 'content-type': 'application/json' },
-        });
-    }
 
-    const hash = crypto.createHash("sha256");
-    hash.update(ADMIN_PASSWORD);
-    const hashStr: string = hash.digest('hex');
+        case "enqueue": {
+            const room = params.get("room");
 
-    if (token === hashStr) {
-        // TODO: Add admin queue code
+            if (room === null) {
+                return NextResponse.json({
+                    success: false,
+                    message: "Missing required parameter: room" 
+                }, { status: 400 });
+            }
 
-    } else {
-        return new NextResponse(JSON.stringify(
-            { message: 'Invalid Credentials' }), {
-            status: 502,
-            headers: { 'content-type': 'application/json' },
-        });
+            const roomNum = parseInt(room);
+            if (roomNum === null) {
+                return NextResponse.json({
+                    success: false,
+                    message: "Invalid room" 
+                }, { status: 400 });
+            }
+
+            const result = await singletonQueues.enqueue(roomNum);
+            if (result === undefined) {
+                return NextResponse.json({
+                    success: false,
+                    message: "Unsuccessful"
+                }, { status: 500 });
+            }
+
+            return NextResponse.json({
+                success: true,
+                data: result
+            });
+        }
     }
 }

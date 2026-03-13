@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { Redis } from "@upstash/redis";
+import { redis } from "@/server/redis";
 
 type AuthorizedUser = {
     passwordHash: string,
@@ -14,9 +14,6 @@ function generatePasswordHash(password: string, salt: string) : string{
 }
 
 export class AdminAuth {
-    authorizedUsers: AuthorizedUser[] = [];
-    authorizedSessions: string[] = [];
-    redis: Redis = Redis.fromEnv();
     redisPrefix: string;
 
     constructor(redisPrefix: string = "") {
@@ -27,7 +24,7 @@ export class AdminAuth {
 
 
     async verifyLogin(username: string, password: string) : Promise<boolean> {
-        const user: AuthorizedUser | null = await this.redis.hget(this.redisPrefix + "users", "username");
+        let user = await redis.hget<AuthorizedUser>(this.redisPrefix + "users", username);
         if (user === null) return false;
 
         let remotePasswordHash = generatePasswordHash(password, user.salt);
@@ -39,16 +36,20 @@ export class AdminAuth {
     async tryLogin(username: string, password: string) : Promise<string | undefined> {
         if (await this.verifyLogin(username, password)) {
             const sessionToken = Buffer.from(crypto.randomBytes(24)).toString("base64");
-            await this.redis.sadd(this.redisPrefix + "sessions", sessionToken);
+            await redis.sadd(this.redisPrefix + "sessions", sessionToken);
 
             return sessionToken;
         }
     }
 
+	async logout(session: string) : Promise<boolean> {
+		return (await redis.srem(`${this.redisPrefix}sessions`, session)) > 0;
+	}
+
     // probably need to rename the variables "session", "auth_token" and
     // "sessionToken" to one unified name for clarity
     async isSessionAuthorized(session: string) : Promise<boolean> {
-        return await this.redis.sismember(this.redisPrefix + "sessions", session) == 1
+        return (await redis.sismember(this.redisPrefix + "sessions", session)) === 1;
     }
 
 };

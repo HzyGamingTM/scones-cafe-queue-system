@@ -153,7 +153,7 @@ export class UniqueQueueArray {
     // horrible function name, horrible api. please redesign
     async getQueueContainingUuid(uuid: string) : Promise<Queue | undefined> {
         for (let queue of this.queues)
-            if ((await queue.getQueueStatus(uuid)).status === QueueStatus.IN_QUEUE)
+            if ((await queue.getQueueStatus(uuid)).status !== QueueStatus.NOT_IN_QUEUE)
                 return queue;
 
         return undefined;
@@ -162,7 +162,7 @@ export class UniqueQueueArray {
     // ditto
     async getQueueNumberContainingUuid(uuid: string) : Promise<number | undefined> {
         for (let i = 0; i < this.queues.length; i++)
-            if ((await this.queues[i].getQueueStatus(uuid)).status === QueueStatus.IN_QUEUE)
+            if ((await this.queues[i].getQueueStatus(uuid)).status !== QueueStatus.NOT_IN_QUEUE)
                 return i;
 
         return undefined;

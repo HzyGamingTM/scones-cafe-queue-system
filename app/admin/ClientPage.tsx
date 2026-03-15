@@ -5,24 +5,24 @@ import QRCodeWindow from '@/components/QRCodeWindow';
 import { QueueEntry, QueueStatus } from '@/server/queue';
 import { redirect } from 'next/dist/server/api-utils';
 import { useRef, useEffect, useState, ReactNode } from 'react';
+import LogoutIcon from '@/components/LogoutIcon';
 
 type Room = {
 	title: string,
 	imageUrl: string
 }
 
-
 const rooms: Room[] = [
 	{
-		title: "Museum Heist", 
+		title: "Museum Heist 🎨", 
 		imageUrl: "/images/placeholder.png"
 	},
 	{
-		title: "Amongst Us in Space", 
+		title: "Amongst Us in Space 🚀", 
 		imageUrl: "/images/placeholder.png"
 	},
 	{
-		title: "Who Cracked Dumpty?",
+		title: "Who Cracked Dumpty? 🥚",
 		imageUrl: "/images/placeholder.png"
 	}, // TODO: Ask lim for escape room image
 ]
@@ -98,23 +98,26 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 
 
 	return (
-		<div className="flex flex-col gap-2 p-3 max-w-120 outline outline-zinc-800 rounded-lg">
-			<div className="w-full flex items-center justify-between gap-4">
-				<h1 className="font-bold text-2xl leading-none">
-					Room {room}
-				</h1>
-				
-				<div className="flex gap-4">
-					<button className="px-2 py-1 rounded-lg outline outline-zinc-800 bg-green-500/30" onClick={enqueueButtonAction}>
-						Enqueue
-					</button>
-				
-					<button className="px-2 py-1 rounded-lg outline outline-zinc-800 bg-red-500/30" onClick={dequeueButtonAction}>
-						Dequeue
-					</button>
+		<div className="w-full flex justify-center">
+			<div className="grow flex flex-col gap-2 p-3 max-w-150 outline outline-zinc-800 rounded-lg">
+				<div className="w-full flex items-center justify-between gap-4">
+					
+					<h1 className="basis-0 grow font-bold text-2xl leading-none">
+						{rooms[room].title}
+					</h1>
+					
+					<div className="flex gap-4 max-w-max">
+						<button className="basis-full px-2 py-2 max-w-max rounded-lg outline outline-zinc-800 bg-green-500/30 hover:bg-green-500/35 ease-in-out" onClick={enqueueButtonAction}>
+							Add Person
+						</button>
+					
+						<button className="basis-full px-2 py-2 max-w-max rounded-lg outline outline-zinc-800 bg-red-500/30 hover:bg-red-500/35 ease-in-out" onClick={dequeueButtonAction}>
+							Call Person
+						</button>
+					</div>
 				</div>
+				<span className="w-full font-extralight text-zinc-500 text-sm text-left">{queueLength} in queue</span>
 			</div>
-			<span className="w-full font-extralight text-zinc-500 text-sm text-left">{queueLength} in queue</span>
 		</div>
 	);
 }
@@ -122,9 +125,15 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 export default function AdminClientPage({ numRooms, initialQueueLengths }: { numRooms: number, initialQueueLengths: number[] }) {
 	return (
 		<div className="flex flex-col gap-2 m-2">
-			<h1 className="text-center text-2xl font-bold">Admin Panel</h1>
-			<div className="flex flex-row justify-center gap-5">
-				<section className="flex flex-col items-center justify-center gap-3">
+			<div className='flex flex-row justify-between'>
+				<h1 className="text-center text-2xl font-bold ml-2">Admin Panel 💻</h1>
+				<a className="border-2 w-30 p-2 rounded-4xl flex flex-row bg-zinc-950 border-zinc-900" href="/api/signout?next=/login">
+					<LogoutIcon className="ml-1 w-6"></LogoutIcon>
+					<h1 className='my-auto text-center ml-1'>Sign Out</h1>
+				</a>
+			</div>
+			<div className="flex flex-row justify-center justify-items-stretch gap-5">
+				<section className="grow flex flex-col items-center justify-center gap-3">
 					{multiple((index) => (
 						<AdminCard
 							key={index}

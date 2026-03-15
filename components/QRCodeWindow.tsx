@@ -1,11 +1,22 @@
-import QrCode from "qrcode";
+"use client";
 
-export default function QRCodeWindow(qrCodeUrl: string) {
-    if (qrCodeUrl === "") {
+import QrCode from "qrcode";
+import { useEffect } from "react";
+
+export default function QRCodeWindow(params: {qrCodeUrl: string}) {
+    if (params.qrCodeUrl === "") {
         return (<></>);
     }
 
+    useEffect(() => {
+        let canvas: HTMLElement | null = document.getElementById('qrcode-canvas');
+        QrCode.toCanvas(canvas, canvas!.innerHTML, () => {
+            console.log("Error loading QR Code");
+        });
+    });
+
+
     return (<>
-        <h1>{qrCodeUrl}</h1>
+        <canvas id="qrcode-canvas" className="mx-auto">{params.qrCodeUrl}</canvas>
     </>)
 }

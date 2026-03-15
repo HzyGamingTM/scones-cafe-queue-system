@@ -3,6 +3,7 @@
 import Card from '@/components/Card';
 import QRCodeWindow from '@/components/QRCodeWindow';
 import { QueueEntry, QueueStatus } from '@/server/queue';
+import { redirect } from 'next/dist/server/api-utils';
 import { useRef, useEffect, useState, ReactNode } from 'react';
 
 type Room = {
@@ -30,9 +31,8 @@ function multiple(generator: (index: number) => React.ReactNode, count: number) 
 	let ret: React.ReactNode[] = []
 	for (let i = 0; i < count; i++)
 		ret.push(generator(i));
-
 	return ret;
-}	
+}
 
 function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLength?: number }) {
 	const [queueLength, setQueueLength] = useState(initialQueueLength ?? -1);
@@ -70,8 +70,8 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 
 			alert(JSON.stringify(json, undefined, 4));
 			
-			if (json.data != undefined)
-				setQrCodeUrl(json.data.uuid);
+			if (json.data != undefined) // Redirect to queue qr code for customers to scan
+				window.location.href = window.location.href.substring(0, -5) + `queue/${json.data?.uuid}?roomName=${rooms[room].title}`;
 		}
 	};
 
@@ -133,6 +133,7 @@ export default function AdminClientPage({ numRooms, initialQueueLengths }: { num
 						/>
 					 ), numRooms)}
 				</section>
+
 			</div>
 		</div>
 	)

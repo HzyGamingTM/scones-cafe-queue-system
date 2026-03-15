@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import NotFound from "@/components/NotFound";
 import { cookies } from "next/headers";
 
-export default async function Queue({ searchParams, params } : { searchParams: Promise<{ set_cookie?: boolean }>, params: Promise<{ uuid: string }> }) {
+export default async function Queue({ searchParams, params } : { searchParams: Promise<{ set_cookie?: boolean, roomName: string }>, params: Promise<{ uuid: string }> }) {
     const { uuid } = await params;
     const uuidQueueStatus = await (await singletonQueues.getQueueContainingUuid(uuid))?.getQueueStatus(uuid);
-    const { set_cookie: setCookie } = await searchParams;
+    
+    const { set_cookie: setCookie, roomName } = await searchParams;
 
     if (uuidQueueStatus && uuidQueueStatus.status == QueueStatus.IN_QUEUE) {
         if (setCookie === true) {
@@ -17,7 +18,7 @@ export default async function Queue({ searchParams, params } : { searchParams: P
                 expires: new Date(Date.now() + twodays)
             });
         }
-        return <Client uuid={uuid} />
+        return <Client uuid={uuid} roomName={roomName} />;
     }
 
     return <NotFound/>;

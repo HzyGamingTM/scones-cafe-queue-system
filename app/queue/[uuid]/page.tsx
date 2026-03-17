@@ -11,13 +11,13 @@ import Footer from "@/components/Footer";
 
 export default async function Queue({ searchParams, params } : { searchParams: Promise<{ set_cookie?: boolean, roomName: string }>, params: Promise<{ uuid: string }> }) {
     const { uuid } = await params;
-    const uuidQueueStatus = await (await Queues.getQueueContainingUuid(uuid))?.getQueueStatus(uuid);
+    const entryInfo = await Queues.getEntryInfo(uuid);
     
     const { set_cookie: setCookie, roomName } = await searchParams;
 
     const cookieStore = await cookies();
 
-    if (uuidQueueStatus && uuidQueueStatus.status != QueueStatus.NOT_IN_QUEUE) {
+    if (entryInfo.status != QueueStatus.NOT_IN_QUEUE) {
         if (setCookie === true) {
             const twodays = 2 * 86400 * 1000;
             cookieStore.set("queue_token", uuid, {
@@ -27,7 +27,7 @@ export default async function Queue({ searchParams, params } : { searchParams: P
         return (
             <div suppressHydrationWarning className="flex flex-col min-h-screen min-w-80 justify-between"> 
                 <div className="grow content-center">
-                    <Client uuid={uuid} roomName={roomName} initialQueueStatus={uuidQueueStatus.status} isAdmin={cookieStore.has("auth_token")} />
+                    <Client uuid={uuid} roomName={roomName} initialQueueStatus={entryInfo.status} isAdmin={cookieStore.has("auth_token")} />
                 </div>
                 <Footer />
                 <div className="w-max h-max">

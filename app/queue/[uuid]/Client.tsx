@@ -5,12 +5,13 @@ import InQueue from "./InQueue";
 import Served from "./Served"
 
 import { QueueStatus } from "@/server/queue";
-
 import { useEffect, useState, useRef } from "react";
+import { urlBase64ToUint8Array } from "@/server/utils";
 
 export default function ClientQueue({ uuid, roomName, initialQueueStatus, isAdmin = false } : { uuid: string, roomName: string, initialQueueStatus: QueueStatus, isAdmin?: boolean }) {
     const [peopleAhead, setPeopleAhead] = useState(0);
     const [queueStatus, setQueueStatus] = useState(initialQueueStatus);
+    const [counter, setCounter] = useState(0);
     const intervalObject = useRef<NodeJS.Timeout>(null);
     
     const WAIT_TIME_PER_PERSON: number = 8;
@@ -24,13 +25,37 @@ export default function ClientQueue({ uuid, roomName, initialQueueStatus, isAdmi
 
     useEffect(() => {
         if ('Notification' in window) {
-            if (Notification.permission === "granted") return;
+            if (Notification.permission === "granted")
+                return;
+            
             alert("Please enable website notifications!")
-            Notification.requestPermission((result) => {
-                if (!result) alert("Please enable Web Notifications.");
+            Notification.requestPermission(async (result) => {
+                if (!result) {
+                    alert("Please enable Web Notifications.");
+                    return;
+                }
+
+                const reg = await navigator.serviceWorker.ready;
+                const vapidPublicKey = "BLdS1xe6dU_RMIdaue-4kiIEZ0n8eB4nTaY95l6fKeNMjBctOKM9r_OF2OTOKvccQIWr9N6ICZI_KXMwuImqz-4";
+
+                const sub = await reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: vapidPublicKey,
+                });
+
+                await fetch('api/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sub.toJSON()),
+                });
             });
         } else alert("Your browser does not support notifications!")
     }, []);
+
+    useEffect(() => {
+        navigator.serviceWorker.register("../sw.js").catch(console.error);
+    });
+
 
     useEffect(() => {
         let canvas: HTMLElement | null = document.getElementById('qrcode-canvas');
@@ -39,32 +64,37 @@ export default function ClientQueue({ uuid, roomName, initialQueueStatus, isAdmi
                 console.log("Error loading QR Code");
             });
         }
+    }, []);
 
-        const pollQueue = () => {
-            console.log("finding out rn");
-            fetch(`/api/queue?queue_token=${uuid}`).then(async (value: Response) => {
-                let json = await value.json();
-                console.log(json);
-                if (json.success && json.data !== undefined) {
-                    setPeopleAhead(json.data.queueStatus.people_ahead);
-                    setQueueStatus(json.data.queueStatus.status);
+    useEffect(() => {
+        console.log("finding out rn");
+        fetch(`/api/entry/${uuid}/status`).then(async (value: Response) => {
+            let json = await value.json();
+            console.log(json);
+            if (json.success && json.data !== undefined) {
+                setPeopleAhead(json.data.peopleAhead);
+
+                if (json.data.status == QueueStatus.SERVED && queueStatus == QueueStatus.IN_QUEUE) {
+                    console.log("Requesting for notification to be shown");
+                    fetch(`/api/sendme?uuid=${uuid}`);
                 }
 
-                if (value.status != 200)
-                    if (intervalObject.current !== null)
-                        clearInterval(intervalObject.current);
+                setQueueStatus(json.data.status);
+            }
 
-            }).catch((reason) => {
-                console.log("failed to find out");
-                console.log(reason);
+            if (value.status != 200)
                 if (intervalObject.current !== null)
                     clearInterval(intervalObject.current);
-            });
-        }
 
-        pollQueue();
-        intervalObject.current = setInterval(pollQueue, 5000); // 5 Sec interval
-    }, []);
+        }).catch((reason) => {
+            console.log("failed to find out");
+            console.log(reason);
+            if (intervalObject.current !== null)
+                clearInterval(intervalObject.current);
+        });
+
+        setTimeout(() => setCounter(c => c + 1), 5000);
+    }, [counter]);
 
     if (queueStatus == QueueStatus.IN_QUEUE) {
         return (

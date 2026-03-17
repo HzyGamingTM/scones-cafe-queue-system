@@ -1,10 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import localFont from "next/font/local";
 import Card from "@/components/Card";
-import Footer from "@/components/Footer";
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { QueueStatus } from "@/server/queue"
 
 export const Pusab = localFont({

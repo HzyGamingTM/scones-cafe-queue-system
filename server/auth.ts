@@ -13,6 +13,10 @@ function generatePasswordHash(password: string, salt: string) : string{
             .digest("hex");
 }
 
+function generateSessionToken() {
+    return Buffer.from(crypto.randomBytes(24)).toString("base64").replaceAll("/", "-").replaceAll("+", "_");
+}
+
 export class Auth {
     redisPrefix: string;
 
@@ -35,7 +39,7 @@ export class Auth {
     // horrible function name
     async tryLogin(username: string, password: string) : Promise<string | undefined> {
         if (await this.verifyLogin(username, password)) {
-            const sessionToken = Buffer.from(crypto.randomBytes(24)).toString("base64");
+            const sessionToken = generateSessionToken();
             await redis.sadd(this.redisPrefix + "sessions", sessionToken);
 
             return sessionToken;

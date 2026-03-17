@@ -6,6 +6,7 @@ import { cookies, headers } from "next/headers";
 import { Queues } from "@/server/queue";
 import ClientPage from "./ClientPage";
 
+
 export default async function Home({ searchParams } : { searchParams: Promise<any> } ) {
     const sp = await searchParams;
     const cookieStore = await cookies();
@@ -32,6 +33,8 @@ export default async function Home({ searchParams } : { searchParams: Promise<an
         }
 
     }
+
+    
     
     return ( 
         <div className="flex flex-col min-h-screen min-w-80 bg-radial from-sky-950 to-black">

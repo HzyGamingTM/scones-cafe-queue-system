@@ -40,7 +40,7 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 	const [showDequeueConfirm, setShowDequeueConfirm] = useState(false);
 
 	if (queueLength == -1) {
-		fetch(`/api/admin?resource=queue_length&room=${room}`).then(async v => {
+		fetch(`/api/queue/${room}/length`).then(async v => {
 			const { success, data } : { success: boolean, data?: number } = await v.json();
 			if (success == true) {
 				if (data == undefined)
@@ -48,18 +48,14 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 					
 				setQueueLength(data ?? 0);
 			} else {
-				console.error(`Unsuccessful GET /api/admin?resource=queue_length&room=${room}`);
+				console.error(`Unsuccessful GET /api/queue/${room}/length`);
 			}
 		});
 	}
 
 	const enqueueButtonAction = async () => {
-		const result = await fetch("/api/admin", {
+		const result = await fetch(`/api/queue/${room}/enqueue`, {
 			method: "POST",
-			body: JSON.stringify({
-				method: "enqueue",
-				room: room
-			})
 		});
 
 		const json: { success: boolean, message?: string, data?: QueueEntry } = await result.json();
@@ -75,12 +71,8 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
 	};
 
 	const dequeueButtonAction = async () => {
-		const result = await fetch("/api/admin", {
+		const result = await fetch(`/api/queue/${room}/dequeue`, {
 			method: "POST",
-			body: JSON.stringify({
-				method: "dequeue",
-				room: room
-			})
 		});
 
 		const json: { success: boolean, message?: string, data?: QueueStatus } = await result.json();

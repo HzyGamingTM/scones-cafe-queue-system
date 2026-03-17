@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import crypto from "node:crypto";
 import { redis } from "./redis";
 
 export enum QueueStatus {
@@ -12,6 +12,10 @@ export type QueueEntry = {
     time_added: string,
 };
 
+function generateRandomId() {
+    return Buffer.from(crypto.randomBytes(9)).toString("base64").replaceAll("/", "-").replaceAll("+", "_");
+}
+
 export class Queue {
     entries: QueueEntry[] = [];
     pastEntries: QueueEntry[] = [];
@@ -24,7 +28,7 @@ export class Queue {
 
     async enqueue(uuid?: string) : Promise<QueueEntry> {
         if (uuid === undefined)
-            uuid = randomUUID().toString()
+            uuid = generateRandomId();
 
         const newQueueEntry: QueueEntry = {
             uuid: uuid,
@@ -99,13 +103,17 @@ export class Queue {
     async getQueueStatus(uuid: string) : Promise<{status: QueueStatus, people_ahead?: number}> {
         const rp = this.redisPrefix;
 
-        let pos = await redis.lpos(`${rp}entries_uuid`, uuid);
-        if (pos !== null)
-            return { status: QueueStatus.IN_QUEUE, people_ahead: pos };
+        try {
+            let pos = await redis.lpos(`${rp}entries_uuid`, uuid);
+            if (pos !== null)
+                return { status: QueueStatus.IN_QUEUE, people_ahead: pos };
 
-        pos = await redis.lpos(`${rp}pastEntries_uuid`, uuid);
-        if (pos !== null)
-            return { status: QueueStatus.SERVED };
+            pos = await redis.lpos(`${rp}pastEntries_uuid`, uuid);
+            if (pos !== null)
+                return { status: QueueStatus.SERVED };
+        } catch (e) {
+            console.error(e);
+        }
 
         return { status: QueueStatus.NOT_IN_QUEUE };
     }
@@ -122,27 +130,34 @@ export class UniqueQueueArray {
             this.queues.push(new Queue(`${redisPrefix}uqa_queue${i}`));
     }
 
-    // horrible function name, horrible api. please redesign
-    async getQueueContainingUuid(uuid: string) : Promise<Queue | undefined> {
-        for (let queue of this.queues)
-            if ((await queue.getQueueStatus(uuid)).status !== QueueStatus.NOT_IN_QUEUE)
-                return queue;
+    async getEntryInfo(uuid: string) : Promise<{ queueNum?: number, queue?: Queue, status: QueueStatus, people_ahead?: number }> {
+        const queueStatuses = await Promise.all(this.queues.map(q => q.getQueueStatus(uuid)));
 
-        return undefined;
-    }
-
-    // ditto
-    async getQueueNumberContainingUuid(uuid: string) : Promise<number | undefined> {
         for (let i = 0; i < this.queues.length; i++)
-            if ((await this.queues[i].getQueueStatus(uuid)).status !== QueueStatus.NOT_IN_QUEUE)
-                return i;
+            if (queueStatuses[i].status == QueueStatus.IN_QUEUE)
+                return {
+                    queueNum: i,
+                    queue: this.queues[i],
+                    status: queueStatuses[i].status,
+                    people_ahead: queueStatuses[i].people_ahead
+                };
 
-        return undefined;
+        for (let i = 0; i < this.queues.length; i++)
+            if (queueStatuses[i].status == QueueStatus.SERVED)
+                return {
+                    queueNum: i,
+                    queue: this.queues[i],
+                    status: queueStatuses[i].status
+                };
+
+        return {
+            status: QueueStatus.NOT_IN_QUEUE
+        };
     }
 
-    async enqueue(room: number, uuid?: string) : Promise<QueueEntry | undefined> {
-        room = Math.floor(room);
-        if (room < 0 || room >= this.queues.length)
+    async enqueue(queueNum: number, uuid?: string) : Promise<QueueEntry | undefined> {
+        queueNum = Math.floor(queueNum);
+        if (queueNum < 0 || queueNum >= this.queues.length)
             return undefined;
 
         if (uuid !== undefined) {
@@ -151,7 +166,7 @@ export class UniqueQueueArray {
                     return undefined;
         }
 
-        return await this.queues[room].enqueue(uuid);
+        return await this.queues[queueNum].enqueue(uuid);
     }
 
     async get(uuid: string) : Promise<QueueEntry | undefined> {
@@ -163,25 +178,24 @@ export class UniqueQueueArray {
         }
     }
 
-    async dequeue(room: number) : Promise<QueueEntry | undefined> {
-        room = Math.floor(room);
-        if (room < 0 || room >= this.queues.length)
+    async dequeue(queueNum: number) : Promise<QueueEntry | undefined> {
+        queueNum = Math.floor(queueNum);
+        if (queueNum < 0 || queueNum >= this.queues.length)
             return undefined;
 
-        return await this.queues[room].dequeue();
+        return await this.queues[queueNum].dequeue();
     }
 
-    async getFirst(room: number) : Promise<QueueEntry | undefined> {
-        room = Math.floor(room);
-        if (room < 0 || room >= this.queues.length)
+    async getFirst(queueNum: number) : Promise<QueueEntry | undefined> {
+        queueNum = Math.floor(queueNum);
+        if (queueNum < 0 || queueNum >= this.queues.length)
             return undefined;
 
-        return await this.queues[room].getFirst();
+        return await this.queues[queueNum].getFirst();
     }
 }
 
 // TODO: turn 3 into a configured variable. maybe roomsconfig.json or something.
 // since this file is only about queues, maybe extract the singleton into another file
 // which also handles loading from a file
-let Queues = new UniqueQueueArray("", 3);
-export { Queues };
+export const Queues = new UniqueQueueArray("", 3);

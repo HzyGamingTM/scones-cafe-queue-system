@@ -4,6 +4,7 @@ import QrCode from "qrcode";
 import InQueue from "./InQueue";
 import Served from "./Served"
 
+import { flushSync } from 'react-dom';
 import { QueueEntry } from "@/server/queue";
 import { useEffect, useState, useRef } from "react";
 import { rooms } from "@/server/rooms.json"
@@ -42,10 +43,14 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false } 
                 .on("broadcast", { event: "UPDATE" }, event => {
                     console.log(event.payload);
                     if (event.payload.record.id == id)
-                        setEntry(event.payload.record)
+                        flushSync(() => {
+                            setEntry(event.payload.record)
+                        });
 
                     if (event.payload.old_record.served == false && event.payload.record.served == true)
-                        setPeopleAhead(p => p - 1);
+                        flushSync(() => {
+                            setPeopleAhead(p => p - 1);
+                        });
                 })
                 .subscribe(status => {
                     console.log(status);
@@ -62,8 +67,10 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false } 
             let json = await value.json();
             console.log(json);
             if (json.success && json.data !== undefined) {
-                setPeopleAhead(json.data.peopleAhead);
-                setEntry(json.data)
+                flushSync(() => { // Flush to force dom reload
+                    setPeopleAhead(json.data.peopleAhead);
+                    setEntry(json.data)
+                });
             }
 
             if (value.status != 200)

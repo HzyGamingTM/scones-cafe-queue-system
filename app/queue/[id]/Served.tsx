@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export default function Served({ id, roomName, isAdmin = false } : { id: string, roomName: string, isAdmin?: boolean }) {
     return (
         <div className="max-h-200 h-full flex justify-center items-center">

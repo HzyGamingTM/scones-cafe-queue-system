@@ -32,7 +32,8 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false }:
             return res.json();
         },
         enabled: !!id,
-        staleTime: 10 * 1000,
+        staleTime: 60 * 1000,
+        refetchInterval: 60 * 1000,
         refetchOnWindowFocus: true
     })
 

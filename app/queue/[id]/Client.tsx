@@ -12,8 +12,8 @@ import { clientSupabase } from "@/server/client-supabase";
 import { useQuery } from "@tanstack/react-query";
 
 export default function ClientQueue({ id, initialEntry, room, isAdmin = false }: { id: string, initialEntry: QueueEntry, room: number, isAdmin?: boolean }) {
-    const [peopleAhead, setPeopleAhead] = useState(0);
-    const [entry, setEntry] = useState<null | QueueEntry>(null);
+
+
     const [counter, setCounter] = useState(0);
     const intervalObject = useRef<NodeJS.Timeout>(null);
 
@@ -39,6 +39,9 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false }:
         staleTime: 30 * 1000,
         refetchOnWindowFocus: true
     })
+
+    const [peopleAhead, setPeopleAhead] = useState<number>(data.peopleAhead);
+    const [entry, setEntry] = useState<null | QueueEntry>(data);
 
     useEffect(() => {
         if (!isLoading) {

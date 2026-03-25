@@ -89,6 +89,29 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false } 
         // intervalObject.current = setTimeout(() => setCounter(c => c + 1), 5000);
     }, [counter]);
 
+    useEffect(() => {
+        function handleFetch() {
+            fetch(`/api/entry/${id}`).then(async (value: Response) => {
+                let json = await value.json();
+                if (json.success && json.data !== undefined) {
+                    setPeopleAhead(json.data.peopleAhead);
+                    setEntry(json.data)
+                }
+            })
+        }
+        function handleFocus() {
+            if (document.visibilityState === "visible") {
+                handleFetch();
+            }
+        }
+
+        document.addEventListener("visibilitychange", handleFocus);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleFocus)
+        }   
+    }, [])
+
     if (!entry?.served) {
         return (
             <InQueue

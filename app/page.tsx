@@ -13,7 +13,9 @@ export default async function Home({ searchParams } : { searchParams: Promise<an
     
     return ( 
         <div className="flex flex-col min-h-screen min-w-80 bg-radial from-sky-950 to-black">
-            <ClientPage inQueue={inQueue} />
+            <div className="grow p-4">
+                <h1 className="font-bold text-2xl text-center">There is no content on this page.</h1>
+            </div>
             <Footer />
         </div>
     );

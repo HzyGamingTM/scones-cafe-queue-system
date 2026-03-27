@@ -2,15 +2,21 @@
     "rooms": [
         {
             "name": "Museum Heist 🎨", 
-            "description": "wei"
+            "description": "",
+			"queue_prefix": "M",
+            "wait_time_min": 8
         },
         {
             "name": "SC1-FI 🚀",
-            "description": "Among Us In Space"
+            "description": "",
+			"queue_prefix": "S",
+            "wait_time_min": 8
         },
         {
             "name": "Dumpty Humpty 🥚",
-            "description": "Who Cracekd dUDpy"
+            "description": "",
+			"queue_prefix": "D",
+            "wait_time_min": 8
         }
     ]
 }

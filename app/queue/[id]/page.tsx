@@ -39,6 +39,7 @@ export default async function Queue({ params }: { params: Promise<{ id: string }
                 return {
                     room: data[0].queue,
                     served: data[0].served,
+                    id_in_queue: data[0].id_in_queue,
                     peopleAhead: peopleAhead.count,
                 }
 

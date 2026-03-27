@@ -3,5 +3,6 @@ export type QueueEntry = {
     created_at: string,
     served_at: string | null,
     queue: number,
-    served: boolean
+    served: boolean,
+	id_in_queue: number
 }

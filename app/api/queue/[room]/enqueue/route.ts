@@ -1,6 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import { secretSupabase } from "@/server/secret-supabase";
 import { AuthSingleton } from "@/server/auth";
+import { redis } from "@/server/redis";
 import { rooms } from "@/server/rooms.json"
 
 export async function POST(request: NextRequest, { params } : { params: Promise<{ room: string }> }) {
@@ -27,6 +28,22 @@ export async function POST(request: NextRequest, { params } : { params: Promise<
             success: false,
             message: error
         }, { status: 500 });
+    }
+
+    if (await redis.get(`queue_${roomNum}_buffer`) == 1) {
+        const { data: newData, error: newError } = await secretSupabase.rpc("dequeue", { room: roomNum });
+        await redis.set(`queue_${roomNum}_buffer`, 0);
+        if (newError) {
+            return NextResponse.json({
+                success: false,
+                message: newError
+            }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            success: true, 
+            data: newData
+        });
     }
 
     return NextResponse.json({

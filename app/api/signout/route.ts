@@ -4,19 +4,19 @@ import { redirect } from 'next/navigation';
 import { AuthSingleton } from "@/server/auth";
 
 export async function GET(request: NextRequest) {
-	const searchParams = request.nextUrl.searchParams;
-	const nextPage = searchParams.get("next");
+    const searchParams = request.nextUrl.searchParams;
+    const nextPage = searchParams.get("next");
 
-	const cookieStore = await cookies()
-	const authToken = cookieStore.get("auth_token")?.value;
-	if (authToken !== undefined) {
-		AuthSingleton.logout(authToken);
-	}
+    const cookieStore = await cookies()
+    const authToken = cookieStore.get("auth_token")?.value;
+    if (authToken !== undefined) {
+        AuthSingleton.logout(authToken);
+    }
 
-	cookieStore.delete("auth_token");
-	
-	if (nextPage !== null)
-		redirect(nextPage);
+    cookieStore.delete("auth_token");
+    
+    if (nextPage !== null)
+        redirect(nextPage);
 
-	return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true });
 }

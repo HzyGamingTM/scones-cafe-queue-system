@@ -26,6 +26,7 @@ export async function GET(request: NextRequest, { params } : { params: Promise<{
             data: {
                 room: data[0].queue,
                 served: data[0].served,
+                id_in_queue: data[0].id_in_queue,
                 peopleAhead: peopleAhead.count
             }
         });

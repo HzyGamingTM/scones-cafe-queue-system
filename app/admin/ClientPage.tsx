@@ -7,6 +7,7 @@ import { clientSupabase } from '@/server/client-supabase';
 import LogoutIcon from '@/components/LogoutIcon';
 import Modal from "@/components/Modal";
 import { rooms } from "@/server/rooms.json";
+import { REALTIME_SUBSCRIBE_STATES } from '@supabase/supabase-js';
 
 function multiple(generator: (index: number) => React.ReactNode, count: number) {
     let ret: React.ReactNode[] = []
@@ -20,6 +21,7 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
     const [qrCodeUrl, setQrCodeUrl] = useState("");
     const [showEnqueueConfirm, setShowEnqueueConfirm] = useState(false);
     const [showDequeueConfirm, setShowDequeueConfirm] = useState(false);
+	const [subscribedStatus, setSubscribedStatus] = useState(REALTIME_SUBSCRIBE_STATES.CLOSED);
 
     const enqueueButtonAction = async () => {
         const result = await fetch(`/api/queue/${room}/enqueue`, {
@@ -53,6 +55,22 @@ function AdminCard({ room, initialQueueLength }: { room: number, initialQueueLen
             });
         }
     }, []);
+
+    const [counter, setCounter] = useState(0);
+    useEffect(() => {
+        if (subscribedStatus !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
+            (async () => {
+				let queueLen = await clientSupabase.from("public_queues")
+					.select("*", { count: "exact", head: true })
+					.eq("queue", room)
+					.eq("served", false);
+
+				setQueueLength(queueLen.count ?? -1);
+            })();
+        }
+
+        setTimeout(() => setCounter(c => c + 1), 10000);
+    }, [counter]);
 
     const addedEventListeners = useRef(false);
     useEffect(() => {

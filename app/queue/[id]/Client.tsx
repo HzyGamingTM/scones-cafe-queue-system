@@ -43,7 +43,6 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false }:
     const [peopleAhead, setPeopleAhead] = useState<number>(data.peopleAhead);
     const [entry, setEntry] = useState<null | QueueEntry>(data);
     const [subscribedStatus, setSubscribedStatus] = useState<REALTIME_SUBSCRIBE_STATES>(REALTIME_SUBSCRIBE_STATES.CLOSED);
-    const [counter, setCounter] = useState(0);
 
     useEffect(() => {
         if (!isLoading) {
@@ -63,6 +62,7 @@ export default function ClientQueue({ id, initialEntry, room, isAdmin = false }:
 
     }, []);
 
+    const [counter, setCounter] = useState(0);
     useEffect(() => {
         if (subscribedStatus !== REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
             (async () => {
